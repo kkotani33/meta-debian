@@ -38,8 +38,9 @@ SRC_URI_class-native = "${BASE_SRC_URI}"
 S = "${DEBIAN_UNPACK_DIR}/unix"
 
 do_debian_patch_append() {
-	cd ${S}/..
-	patch  -R -u -p1 < debian/patches/tclprivate.diff
+    import subprocess
+    os.chdir(d.getVar("S") + "/..")
+    subprocess.run(["patch", "-R", "-u", "-p1", "<", "debian/patches/tclprivate.diff"])
 }
 
 inherit autotools ptest binconfig
