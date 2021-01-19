@@ -40,7 +40,7 @@ python do_debian_unpack_extra() {
     elif os.path.isfile(workdir + "/" + BPN + "_" + DPV + ".diff"):
         shutil.rmtree(debian_unpack_dir + "/debian", ignore_errors=True)
         os.chdir(debian_unpack_dir)
-        subprocess.run(["patch", "-p1", "<", workdir + "/" + BPN + "_" + DPV + ".diff"])
+        subprocess.run("patch -p1 < {}/{}_{}.diff".format(workdir, BPN, DPV), shell=True)
 }
 
 EXPORT_FUNCTIONS do_debian_unpack_extra

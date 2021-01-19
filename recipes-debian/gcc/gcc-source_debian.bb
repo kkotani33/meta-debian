@@ -20,7 +20,7 @@ unpack_extra() {
 }
 
 # Generate debian/patches/series
-do_debian_patch_append() {
+do_debian_patch_prepend() {
     bb.build.exec_func('debian_patch_extra', d)
 }
 
