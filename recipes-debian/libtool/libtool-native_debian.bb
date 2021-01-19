@@ -17,7 +17,8 @@ EXTRA_OECONF = " --with-libtool-sysroot=${STAGING_DIR_NATIVE}"
 # As author's comment, shared library on ELF system should already known which  
 # libs it need to link, but the case seem is not true for gettext.                                    
 do_debian_patch_prepend() {                                                     
-	sed -i -e "/link_all_deplibs/ d" ${S}/debian/patches/series    
+    import subprocess
+    subprocess.run("sed -i -e '/link_all_deplibs/ d' {}/debian/patches/series".format(d.getVar("S")), shell = True)
 }
 
 do_configure_prepend() {

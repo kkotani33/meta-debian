@@ -45,12 +45,14 @@ PYTHON_MAJMIN = "3.7"
 PYTHON_BINABI = "${PYTHON_MAJMIN}m"
 
 do_debian_patch_prepend() {
+    import subprocess
 	# Debian puts pkgconfig in /usr/lib/$(MULTIARCH)/pkgconfig
 	# which is different with Poky's multiarch structure
-	sed -i -e "/^multiarch*.diff/d" ${DEBIAN_UNPACK_DIR}/debian/patches/series
+    subprocess.run("sed -i -e '/^multiarch*.diff/d' {}/debian/patches/series".format(d.getVar("DEBIAN_UNPACK_DIR")), shell = True)
+
 
 	# Use qemu-wrapper instead, so it can be cross built
-	sed -i -e "/^profiled-build.diff/d" ${DEBIAN_UNPACK_DIR}/debian/patches/series
+    subprocess.run("sed -i -e '/^profiled-build.diff/d' {}/debian/patches/series".format(d.getVar("DEBIAN_UNPACK_DIR")), shell = True)
 }
 
 inherit autotools pkgconfig qemu ptest multilib_header update-alternatives

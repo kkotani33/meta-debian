@@ -29,18 +29,18 @@ python () {
 # Make "debian" sub folder be inside source code folder
 addtask debian_unpack_extra after do_unpack before do_debian_patch
 python do_debian_unpack_extra() {
-    import shutil
+    import shutil, subprocess
     workdir = d.getVar("WORKDIR")
     debian_unpack_dir = d.getVar("DEBIAN_UNPACK_DIR")
     BPN = d.getVar("BPN")
     DPV = d.getVar("DPV")
     if os.path.isdir(workdir + "/debian"):
-        shutil.rmtree(debian_unpack_dir + "/debian")
+        shutil.rmtree(debian_unpack_dir + "/debian", ignore_errors=True)
         shutil.move(workdir + "/debian", debian_unpack_dir)
     elif os.path.isfile(workdir + "/" + BPN + "_" + DPV + ".diff"):
-        shutil.rmtree(debian_unpack_dir + "/debian")
+        shutil.rmtree(debian_unpack_dir + "/debian", ignore_errors=True)
         os.chdir(debian_unpack_dir)
-        subpricess.run(["patch", "-p1", "<", workdir + "/" + BPN + "_" + DPV + ".diff"])
+        subprocess.run(["patch", "-p1", "<", workdir + "/" + BPN + "_" + DPV + ".diff"])
 }
 
 EXPORT_FUNCTIONS do_debian_unpack_extra
@@ -61,7 +61,7 @@ def debian_check_source_format(d):
         bb.note("Debian source format is not defined, assume '1.0'")
         return 1
     with open(format_file, "r") as f:
-        format_val = f.read()
+        format_val = f.read().rstrip('\n')
     bb.note("Debian source format is '{}'".format(format_val))
     if format_val == "3.0 (native)":
         bb.note("nothing to do")
@@ -94,8 +94,8 @@ def debian_patch_quilt(d):
     debian_quilt_patches = d.getVar("DEBIAN_QUILT_PATCHES", True)
     debian_unpack_dir = d.getVar("DEBIAN_UNPACK_DIR", True)
     debian_find_patches_dir = d.getVar("DEBIAN_FIND_PATCHES_DIR", True)
-    if debian_quilt_patches is None:
-        if os.path.getsize(os.path.join(debian_unpack_dir,"debian/patches/series")) > 0:
+    if not debian_quilt_patches:
+        if os.path.isfile(os.path.join(debian_unpack_dir,"debian/patches/series")) and os.path.getsize(os.path.join(debian_unpack_dir,"debian/patches/series")) > 0:
             bb.error("DEBIAN_QUILT_PATCHES is null, but {}/debian/patches/series exists".format(debian_unpack_dir))
             bb.fatal("Please consider to redefine DEBIAN_QUILT_PATCHES")
         found_patches = debian_find_patches(d)
@@ -108,7 +108,7 @@ def debian_patch_quilt(d):
         return
 
     # Confirmations for the following quilt command
-    debian_quilt_series = os.path.join(debian_unpack_dir, "series")
+    debian_quilt_series = os.path.join(debian_quilt_patches, "series")
     if not os.path.isdir(debian_quilt_patches):
         bb.fatal("{} not found".format(debian_quilt_patches))
     elif not os.path.isfile(debian_quilt_series):
@@ -124,13 +124,12 @@ def debian_patch_quilt(d):
 
     # apply patches
     import subprocess
-    subprocess.run(["QUILT_PATCHES={}".format(debian_quilt_patches),
-                    "quilt", "--quiltrc", "/dev/null", "push", "-a"])
+    subprocess.run("QUILT_PATCHES={} quilt --quiltrc /dev/null push -a".format(debian_quilt_patches), shell=True)
     
     # avoid conflict with "do_patch"
     if os.path.isdir(debian_quilt_dir):
         import shutil
-        shutil.move(debian_quilt_dir, debian_quiltdir_esc)
+        shutil.move(debian_quilt_dir, debian_quilt_dir_esc)
 
 
 DEBIAN_DPATCH_PATCHES ?= "${DEBIAN_UNPACK_DIR}/debian/patches"
@@ -186,6 +185,7 @@ do_debian_patch[depends] += "${@oe.utils.conditional(\
 do_debian_patch[depends] += "${@oe.utils.conditional(\
     'DEBIAN_PATCH_TYPE', 'dpatch', 'dpatch-native:do_populate_sysroot', '', d)}"
 python do_debian_patch() {
+    bb.plain("{}: run debian_patch".format(d.getVar("BPN")))
     format = debian_check_source_format(d)
     if format == 0:
         return 0
@@ -194,7 +194,7 @@ python do_debian_patch() {
     if format == 1:
         # DEBIAN_PATCH_TYPE must be set manually to decide
         # an action when Debian source format is not 3.0
-        if debian_patch_type is None:
+        if not debian_patch_type:
             bb.fatal("DEBIAN_PATCH_TYPE not set")
 
         bb.note("DEBIAN_PATCH_TYPE: {}".format(debian_patch_type))
@@ -206,7 +206,7 @@ python do_debian_patch() {
             # No patch and no function to apply patches in
             # some source packages. In such cases, confirm
             # that really no patch-related file is included
-            fount_patches = debian_find_patches(d)
+            found_patches = debian_find_patches(d)
             if found_patches:
                 bb.error("the following patches found:")
                 for patch in found_patches:
@@ -215,7 +215,7 @@ python do_debian_patch() {
         elif debian_patch_type == "abnormal":
             debian_patch_abnormal()
         else:
-            bb.fatal("invalid DEBIAN_PATCH_TYPE: ${DEBIAN_PATCH_TYPE}")
+            bb.fatal("invalid DEBIAN_PATCH_TYPE: {}".format(debian_patch_type))
     elif format == 3:
         debian_patch_quilt(d)
 }

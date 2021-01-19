@@ -20,7 +20,11 @@ unpack_extra() {
 }
 
 # Generate debian/patches/series
-do_debian_patch_prepend() {
+do_debian_patch_append() {
+    bb.build.exec_func('debian_patch_extra', d)
+}
+
+debian_patch_extra() {
 	# Base on debian/rules.defs, set required variables for
 	# using debian/rules.patch to generate debian/patches/series.
 	export distrelease="${DISTRO_CODENAME}"

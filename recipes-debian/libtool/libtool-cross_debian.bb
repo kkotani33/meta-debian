@@ -52,5 +52,6 @@ SSTATE_SCAN_FILES += "libtoolize *-libtool"
 # object archive and causes an error while link gettext's libraries although 
 # the dependency flag was already added.
 do_debian_patch_prepend() {
-	sed -i -e "/link_all_deplibs/ d" ${S}/debian/patches/series
+    import subprocess
+    subprocess.run("sed -i -e '/link_all_deplibs/ d' {}/debian/patches/series".format(d.getVar("S")), shell = True)
 }

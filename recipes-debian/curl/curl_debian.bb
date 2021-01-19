@@ -54,8 +54,8 @@ EXTRA_OECONF = " \
 "
 
 do_debian_patch_prepend() {
-	sed -i -e '/^90_gnutls.patch/d' -e '/^99_nss.patch/d' \
-	    ${DEBIAN_QUILT_PATCHES}/series
+    import subprocess
+    subprocess.run("sed -i -e '/^90_gnutls.patch/d' -e '/^99_nss.patch/d' {}/series".format(d.getVar("DEBIAN_QUILT_PATCHES")), shell = True)
 }
 
 do_install_append_class-target() {
