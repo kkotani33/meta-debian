@@ -21,5 +21,5 @@ do_debian_unpack_extra() {
 
 do_debian_patch_prepend() {
     import subprocess
-    subprocess.run("cpp", "-E", "-o", "-", d.getVar("S") + "/debian/patches/series.in", "|", "egrep", "-v", "'^(#.*|$$)'", ">", d.getVar("S") + "/debian/patches/series")
+    subprocess.run("cpp -E -o - {}/debian/patches/series.in | egrep -v '^(#.*|$$)' > {}/debian/patches/series".format(d.getVar("S"), d.getVar("S")), shell=True)
 }
