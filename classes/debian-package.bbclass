@@ -188,7 +188,7 @@ python do_debian_patch() {
     bb.plain("{}: run debian_patch".format(d.getVar("BPN")))
     format = debian_check_source_format(d)
     if format == 0:
-        return 0
+        return
     # apply patches according to the source format
     debian_patch_type = d.getVar("DEBIAN_PATCH_TYPE", True)
     if format == 1:
